@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>SkillCheck</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- TopBar -->
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-mark"></div>
+    <div>
+      <div class="brand-name">SkillCheck</div>
+      <div class="brand-sub">Модуль автопроверки навыков</div>
+    </div>
+  </div>
+  <div class="role-switch">
+    <button id="btn-role-candidate" class="active" onclick="setRole('candidate')">Кандидат</button>
+    <button id="btn-role-recruiter" onclick="setRole('recruiter')">Рекрутер</button>
+  </div>
+</div>
+
+<div class="stage">
+
+<!-- Назначенный тест --> 
+    <div class="view" id="view-assignment">
+    <div class="eyebrow">Кандидат · Личный кабинет</div>
+    <h1>Назначенное тестирование</h1>
+    <p class="lede">Прототип демонстрирует прохождение теста кандидатом: 5 вопросов с выбором одного варианта ответа, таймер и автосохранение прогресса каждые 30 секунд.</p>
+
+    <div class="card" id="assignment-card"></div>
+  </div>
+
+<!-- Экран прохождения теста   -->
+  <div class="view" id="view-exam">
+    <div class="exam-header">
+      <div class="ring-wrap">
+        <div class="ring">
+          <svg width="52" height="52" viewBox="0 0 52 52">
+            <circle class="ring-track" cx="26" cy="26" r="22"></circle>
+            <circle class="ring-progress" id="timer-ring" cx="26" cy="26" r="22" stroke-dasharray="138.2" stroke-dashoffset="0"></circle>
+          </svg>
+          <div class="ring-time" id="timer-text"></div>
+        </div>
+        <div>
+          <div style="font-weight:600;font-size:14px;" id="exam-title">—</div>
+          <div class="sync"><span class="sync-dot" id="sync-dot"></span><span id="sync-label">ожидание автосохранения</span></div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:14px;">
+        <span class="unanswered-counter" id="unanswered-counter">—</span>
+        <div class="qnav" id="qnav"></div>
+      </div>
+    </div>
+
+    <div class="time-warning" id="time-warning">⏱ Осталось меньше минуты — проверьте ответы и завершите тест</div>
+
+    <div class="card">
+      <div class="q-type" id="q-type">—</div>
+      <div class="q-title" id="q-title">—</div>
+      <div class="q-max" id="q-max">—</div>
+      <div id="q-body"></div>
+
+      <div class="exam-nav">
+        <button class="btn secondary" onclick="prevQuestion()">← Назад</button>
+        <div style="display:flex;gap:10px;">
+          <button class="btn ghost" onclick="resetAnswer()">Сбросить ответ</button>
+          <button class="btn ghost" onclick="nextQuestion()">Далее →</button>
+          <button class="btn" onclick="submitTest()">Завершить тест</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Экран результатов -->
+  <div class="view" id="view-results">
+    <div class="eyebrow">Кандидат · Результат</div>
+    <h1>Тестирование завершено</h1>
+    <p class="lede">Все ответы проверены автоматически.</p>
+
+    <div class="card">
+      <div class="score-hero">
+        <div class="score-ring">
+          <svg width="104" height="104" viewBox="0 0 104 104">
+            <circle cx="52" cy="52" r="44" fill="none" stroke="var(--border)" stroke-width="8"></circle>
+            <circle id="score-ring-fg" cx="52" cy="52" r="44" fill="none" stroke="var(--accent)" stroke-width="8"
+              stroke-linecap="round" transform="rotate(-90 52 52)"></circle>
+          </svg>
+          <div class="score-num"><b id="score-pct">0%</b><span>итоговый балл</span></div>
+        </div>
+        <div>
+          <div id="score-summary" style="font-size:14px;color:var(--muted);line-height:1.6;"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <table>
+        <thead><tr><th>#</th><th>Задание</th><th>Тип</th><th>Статус</th><th>Балл</th></tr></thead>
+        <tbody id="results-body"></tbody>
+      </table>
+    </div>
+
+    <div class="card" style="display:flex;justify-content:space-between;align-items:center;">
+      <span style="color:var(--muted);font-size:13px;">Рекрутер получит уведомление о завершении теста автоматически.</span>
+      <button class="btn secondary" onclick="restartDemo()">Пройти заново (демка)</button>
+    </div>
+  </div>
+
+  <!-- Экран списка кандидатов -->
+  <div class="view" id="view-recruiter-list">
+    <div class="eyebrow">Рекрутер · Кандидаты</div>
+    <h1>Вакансия: Frontend-разработчик (Middle)</h1>
+    <p class="lede">Список кандидатов, назначенных на вакансию, с текущим статусом и итоговым баллом.</p>
+
+    <div class="filter-row">
+      <select id="status-filter" onchange="renderRecruiterList()">
+        <option value="all">Все статусы</option>
+        <option value="completed">Завершено</option>
+        <option value="in_progress">Проходит</option>
+        <option value="pending">Ожидает</option>
+        <option value="expired">Истёк срок</option>
+      </select>
+    </div>
+
+    <div class="card">
+      <table>
+        <thead><tr><th>Кандидат</th><th>Статус</th><th class="sortable" id="sort-score" onclick="toggleSort()">Балл <span id="sort-arrow">↕</span></th><th>Обновлено</th><th></th></tr></thead>
+        <tbody id="recruiter-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Экран отчёта по кандидату -->
+  <div class="view" id="view-recruiter-detail">
+    <div class="back-link" onclick="showView('recruiter-list')">← К списку кандидатов</div>
+    <div class="eyebrow">Рекрутер · Отчёт по кандидату</div>
+    <h1 id="rd-name">—</h1>
+    <p class="lede" id="rd-sub"></p>
+
+    <div class="card">
+      <div class="score-hero">
+        <div class="score-ring">
+          <svg width="104" height="104" viewBox="0 0 104 104">
+            <circle cx="52" cy="52" r="44" fill="none" stroke="var(--border)" stroke-width="8"></circle>
+            <circle id="rd-ring-fg" cx="52" cy="52" r="44" fill="none" stroke="var(--accent)" stroke-width="8"
+              stroke-linecap="round" transform="rotate(-90 52 52)"></circle>
+          </svg>
+          <div class="score-num"><b id="rd-pct">0%</b><span>итоговый балл</span></div>
+        </div>
+        <div id="rd-compare" style="font-size:13.5px;color:var(--muted);line-height:1.7;"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <table>
+        <thead><tr><th>#</th><th>Задание</th><th>Тип</th><th>Статус</th><th>Балл</th></tr></thead>
+        <tbody id="rd-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer-note">SkillCheck — учебный фронтенд-прототип модуля КИС · данные хранятся только в этом браузере</div>
+
+<script src="script.js"></script>
+</body>
+</html>
