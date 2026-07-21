@@ -1,2 +1,2 @@
 # SkillCheck
-#Automated screening platform, candidate tools for recruiters
+Automated screening platform, candidate tools for recruiters
